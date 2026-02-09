@@ -1,9 +1,6 @@
 package com.example.springsecuritypact2.controller;
 
-import com.example.springsecuritypact2.dto.LoginRequestDto;
-import com.example.springsecuritypact2.dto.LoginResponseDto;
-import com.example.springsecuritypact2.dto.RefreshTokenRequestDto;
-import com.example.springsecuritypact2.dto.SignInRequestDto;
+import com.example.springsecuritypact2.dto.*;
 import com.example.springsecuritypact2.model.Users;
 import com.example.springsecuritypact2.repository.UsersRepo;
 import com.example.springsecuritypact2.utility.JwtUtility;
@@ -29,12 +26,12 @@ public class AuthController {
     private final ModelMapper modelMapper;
 
     @PostMapping("/signin")
-    public SignInRequestDto getUserSignIn(@RequestBody SignInRequestDto signInRequestDto) {
+    public SignInResponseDto getUserSignIn(@RequestBody SignInRequestDto signInRequestDto) {
         Users users = modelMapper.map(signInRequestDto, Users.class);
         users.setRole("user");
         users.setPassword(passwordEncoder.encode(users.getPassword()));
         Users savedUser = usersRepo.save(users);
-        return modelMapper.map(savedUser, SignInRequestDto.class);
+        return modelMapper.map(savedUser, SignInResponseDto.class);
     }
 
     @PostMapping("/loginpage")
