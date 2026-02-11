@@ -1,27 +1,22 @@
 package com.example.springsecuritypact2.configuration;
 
+import com.example.springsecuritypact2.service.OAuthService;
 import lombok.AllArgsConstructor;
-import org.modelmapper.ModelMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 
+@Slf4j
 @Configuration
 @AllArgsConstructor
 public class SecurityConfiguartion {
 
     private final JwtFilter jwtFilter;
+    private final OAuthService oAuthService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
@@ -32,15 +27,13 @@ public class SecurityConfiguartion {
                         .requestMatchers("/home","/users","/admins","/loginpage","/signin").permitAll()
                             .anyRequest().authenticated()
                 )
-                .formLogin(auth->{})
                 .httpBasic(auth->{})
+                .oauth2Login(auth->auth.failureHandler((request,response,exception)->{
+                    log.error("OAuth2 login failed",exception);
+                    response.sendRedirect("/loginpage");
+                }).successHandler(oAuthService::onAuthenticationSuccess))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
-    }
-
-    @Bean
-    public PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder();
     }
 
 //    @Bean
@@ -49,14 +42,4 @@ public class SecurityConfiguartion {
 //        UserDetails admin = User.withUsername("admin").password(passwordEncoder().encode("root")).roles("admin").build();
 //        return new InMemoryUserDetailsManager(user,admin);
 //    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
-    @Bean
-    public ModelMapper modelMapper(){
-        return new ModelMapper();
-    }
 }

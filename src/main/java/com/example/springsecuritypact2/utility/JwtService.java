@@ -22,14 +22,14 @@ import java.util.function.Function;
 public class JwtService {
 
     // Store your secret key securely - in production, use environment variables
-    @Value("${jwt.secret}")
+    @Value("${security.jwt.secret}")
     private String secretKey;
 
     // Configure token lifespans
-    @Value("${jwt.access-token-expiration}")
+    @Value("${security.jwt.expiration}")
     private long accessTokenExpiration; // e.g., 900000 = 15 minutes
 
-    @Value("${jwt.refresh-token-expiration}")
+    @Value("${security.jwt.refresh-expiration}")
     private long refreshTokenExpiration; // e.g., 604800000 = 7 days
 
     /**
@@ -50,11 +50,38 @@ public class JwtService {
                 .compact();
     }
 
+    public String generateAccessToken(Users userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        // You can add custom claims here like roles, permissions, etc.
+        claims.put("type", "access");
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpiration))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
     /**
      * Generates a refresh token. It contains less information since its
      * only purpose is to obtain new access tokens.
      */
     public String generateRefreshToken(UserDetails userDetails) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "refresh");
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration))
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String generateRefreshToken(Users userDetails) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("type", "refresh");
 
